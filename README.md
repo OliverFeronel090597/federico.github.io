@@ -1,2 +1,2 @@
 # tatay
-tatay felix pixtures
+tatay felix pictures
