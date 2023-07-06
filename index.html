@@ -38,6 +38,7 @@
       top: 5px;
       right: 5px;
       transform: scale(2.5);
+
     }
 
     .photo-container.expanded {
@@ -58,7 +59,8 @@
       padding: 10px;
       border: 2px solid #ddd;
       border-radius: 5px;
-      margin-bottom: 200px;
+      margin-bottom: 50px;
+      width: 200px;
     }
   </style>
 </head>
@@ -68,96 +70,72 @@
   <h1>May 11, 1948 - May 28, 2023</h1>
   <button id="download-button">Download Selected Images</button>
   <div class="gallery" id="photos"></div>
-  <div id="compressedImageData" style="display: none;"></div>
+
   <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const photoContainers = document.querySelectorAll(".photo-container");
-    let expandedPhoto = null;
-    let originalPositionX = 0;
     let isDragging = false;
+    let originalPositionX = 0;
+    let expandedPhoto = null;
 
-    // Add click event listener to each photo
-    for (const photoContainer of photoContainers) {
-      const photo = photoContainer.querySelector(".photo");
+    function displayPhotos() {
+      const photosContainer = document.getElementById("photos");
 
-      photoContainer.addEventListener("click", function () {
-        if (photoContainer.classList.contains("expanded")) {
-          // Close the expanded photo on click if it's already expanded
-          photoContainer.classList.remove("expanded");
-          photo.classList.remove("expanded");
-          expandedPhoto = null;
-        } else {
-          // Close the previously expanded photo if any
-          if (expandedPhoto) {
-            expandedPhoto.classList.remove("expanded");
-            expandedPhoto.querySelector(".photo").classList.remove("expanded");
+      for (let i = 1; i <= 204; i++) {
+        const photoContainer = document.createElement("div");
+        photoContainer.classList.add("photo-container");
+
+        const photo = document.createElement("img");
+        photo.src = `img/${i}.jpg`;
+        photo.alt = `Photo ${i}`;
+        photo.classList.add("photo");
+
+        const downloadCheckbox = document.createElement("input");
+        downloadCheckbox.type = "checkbox";
+        downloadCheckbox.classList.add("download-checkbox");
+        downloadCheckbox.value = `img/${i}.jpg`;
+
+        photoContainer.appendChild(photo);
+        photoContainer.appendChild(downloadCheckbox);
+        photosContainer.appendChild(photoContainer);
+
+        // Add click event listener to each photo
+        photoContainer.addEventListener("click", function (event) {
+          if (expandedPhoto !== photoContainer) {
+            // If a new photo is clicked, close the previously expanded photo
+            if (expandedPhoto) {
+              expandedPhoto.classList.remove("expanded");
+              expandedPhoto.querySelector('.photo').classList.remove("expanded");
+            }
+            // Toggle the "expanded" class on click
+            photoContainer.classList.add("expanded");
+            photo.classList.add("expanded");
+            expandedPhoto = photoContainer;
           }
+        });
 
-          // Toggle the "expanded" class on click
-          photoContainer.classList.add("expanded");
-          photo.classList.add("expanded");
-          expandedPhoto = photoContainer;
-        }
-      });
+        // Add mousedown event listener to each photo
+        photoContainer.addEventListener("mousedown", function (event) {
+          originalPositionX = event.clientX;
+          isDragging = true;
+        });
 
-      // Add mousedown event listener to each photo
-      photoContainer.addEventListener("mousedown", function (event) {
-        originalPositionX = event.clientX;
-        isDragging = true;
-      });
+        // Add mouseup event listener to each photo
+        photoContainer.addEventListener("mouseup", function () {
+          isDragging = false;
+        });
 
-      // Add mouseup event listener to each photo
-      photoContainer.addEventListener("mouseup", function () {
-        isDragging = false;
-      });
-
-      // Add mousemove event listener to each photo
-      photoContainer.addEventListener("mousemove", function (event) {
-        if (isDragging) {
-          const deltaX = event.clientX - originalPositionX;
-          if (Math.abs(deltaX) > 50) {
-            // Close the expanded photo if dragged horizontally enough
-            photoContainer.classList.remove("expanded");
-            photo.classList.remove("expanded");
-            expandedPhoto = null;
+        // Add mousemove event listener to each photo
+        photoContainer.addEventListener("mousemove", function (event) {
+          if (isDragging) {
+            const deltaX = event.clientX - originalPositionX;
+            if (Math.abs(deltaX) > 50) {
+              // Close the expanded photo if dragged horizontally enough
+              photoContainer.classList.remove("expanded");
+              photo.classList.remove("expanded");
+            }
           }
-        }
-      });
+        });
+      }
     }
-  });
-
-  // Function to compress the image using canvas
-  function compressImage(image) {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    // Set the desired width and height for the compressed image
-    const maxWidth = 800;
-    const maxHeight = 600;
-
-    let width = image.width;
-    let height = image.height;
-
-    // Scale the image down if it exceeds the desired dimensions
-    if (width > maxWidth || height > maxHeight) {
-      const scale = Math.min(maxWidth / width, maxHeight / height);
-      width *= scale;
-      height *= scale;
-    }
-
-    // Set canvas dimensions to match the scaled image
-    canvas.width = width;
-    canvas.height = height;
-
-    // Draw the image on the canvas
-    ctx.drawImage(image, 0, 0, width, height);
-
-    // Get the base64 representation of the compressed image with lower quality
-    const compressedImageData = canvas.toDataURL("image/jpeg", 0.7); // 0.7 is the quality value (0.0 to 1.0)
-
-    // Store the compressed image data in the hidden div
-    document.getElementById("compressedImageData").innerText = compressedImageData;
-  }
 
     function downloadSelectedImages() {
       const checkboxes = document.querySelectorAll('.download-checkbox');
