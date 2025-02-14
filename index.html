@@ -6,13 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      background-color: green;
+      background-image: url('heaven_background.jpg'); /* Replace with your heaven-like background image */
       background-size: cover;
       background-repeat: no-repeat;
       background-position: center;
       padding: 20px;
       margin: 0;
       font-family: Arial, sans-serif;
+    }
+
+    .header {
+      width: 100%;
+      height: auto;
+      margin-bottom: 20px;
     }
 
     .gallery {
@@ -29,17 +35,24 @@
       overflow: hidden;
       position: relative;
       cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .photo-container:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
     .photo {
       width: 100%;
       height: auto;
       object-fit: cover;
-      transition: transform 0.2s;
+      transition: transform 0.3s ease;
     }
 
-    .photo:hover {
-      transform: scale(1.05);
+    .selected {
+      border: 5px solid #ff69b4; /* Pink border for selected images */
+      box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
     }
 
     .download-checkbox {
@@ -47,21 +60,32 @@
       top: 5px;
       right: 5px;
       transform: scale(2.5);
+      display: none; /* Hide checkboxes */
     }
 
-    #download-button {
-      margin-top: 20px;
-      position: sticky;
-      top: 0;
-      background-color: #e20303;
-      padding: 10px;
+    /* Floating Download Button */
+    #floating-download-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-image: url('icon/download.png'); /* Pink arrow background */
+      background-size: cover;
+      background-repeat: no-repeat;
+      width: 50px;
+      height: 50px;
       border: 2px solid #ddd;
-      border-radius: 5px;
-      margin-bottom: 50px;
-      width: 200px;
+      border-radius: 50%;
       cursor: pointer;
-      color: white;
       text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      user-select: none;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #floating-download-button:hover {
+      background-color: #c10202;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     }
 
     /* Modal Styles */
@@ -76,6 +100,13 @@
       background-color: rgba(0, 0, 0, 0.9);
       justify-content: center;
       align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal.open {
+      display: flex;
+      opacity: 1;
     }
 
     .modal-content {
@@ -83,6 +114,7 @@
       max-height: 90%;
       display: block;
       margin: auto;
+      transition: transform 0.3s ease;
     }
 
     .close {
@@ -141,6 +173,50 @@
       background-color: #c10202;
     }
 
+    /* Custom Popup Styles */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .popup {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .popup button {
+      margin: 0 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .popup button.confirm {
+      background-color: #e20303;
+      color: white;
+    }
+
+    .popup button.cancel {
+      background-color: #ddd;
+      color: black;
+    }
+
+    .popup button:hover {
+      opacity: 0.8;
+    }
+
     /* Mobile Responsiveness */
     @media (max-width: 768px) {
       .photo-container {
@@ -166,9 +242,8 @@
 </head>
 
 <body>
-  <h1>Federico Osurio Feronel</h1>
-  <h1>May 11, 1948 - May 28, 2023</h1>
-  <button id="download-button">Download Selected Images</button>
+  <img src="icon/internment_1.jpg" class="header" alt="Header Image">
+  <div id="floating-download-button"></div>
   <div class="gallery" id="photos"></div>
 
   <!-- Modal for expanded view -->
@@ -180,12 +255,22 @@
     <button class="download-modal" id="downloadModalButton">Download</button>
   </div>
 
+  <!-- Custom Popup for download confirmation -->
+  <div id="popupOverlay" class="popup-overlay">
+    <div class="popup">
+      <p>Do you want to download the selected images?</p>
+      <button class="confirm" onclick="confirmDownload()">Yes</button>
+      <button class="cancel" onclick="cancelDownload()">No</button>
+    </div>
+  </div>
+
   <script>
     let isDragging = false;
     let originalPositionX = 0;
     let expandedPhoto = null;
     let currentImageIndex = 0;
     const images = [];
+    let clickTimeout;
 
     // Function to display photos
     function displayPhotos() {
@@ -209,10 +294,19 @@
         photoContainer.appendChild(downloadCheckbox);
         photosContainer.appendChild(photoContainer);
 
-        // Add click event listener to each photo
-        photo.addEventListener("click", function () {
+        // Add double click event listener to expand the photo
+        photoContainer.addEventListener("dblclick", function () {
           currentImageIndex = i - 1; // Set current image index
           openModal(photo.src);
+        });
+
+        // Add single click event listener to select/deselect the photo
+        photoContainer.addEventListener("click", function () {
+          clearTimeout(clickTimeout);
+          clickTimeout = setTimeout(() => {
+            photoContainer.classList.toggle("selected");
+            downloadCheckbox.checked = !downloadCheckbox.checked;
+          }, 200); // Single click duration
         });
 
         // Store image sources for navigation
@@ -224,7 +318,7 @@
     function openModal(imageSrc) {
       const modal = document.getElementById("imageModal");
       const modalImg = document.getElementById("modalImage");
-      modal.style.display = "flex";
+      modal.classList.add("open");
       modalImg.src = imageSrc;
 
       // Update download button href
@@ -240,7 +334,7 @@
     // Function to close modal
     function closeModal() {
       const modal = document.getElementById("imageModal");
-      modal.style.display = "none";
+      modal.classList.remove("open");
     }
 
     // Close modal when clicking outside the image
@@ -265,8 +359,52 @@
       document.getElementById("modalImage").src = images[currentImageIndex];
     });
 
-    // Function to download selected images
-    function downloadSelectedImages() {
+    // Enable swipe gestures for navigation
+    let touchstartX = 0;
+    let touchendX = 0;
+
+    function handleGesture() {
+      if (touchendX < touchstartX) {
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        document.getElementById("modalImage").src = images[currentImageIndex];
+      }
+
+      if (touchendX > touchstartX) {
+        currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+        document.getElementById("modalImage").src = images[currentImageIndex];
+      }
+    }
+
+    document.getElementById("imageModal").addEventListener('touchstart', function (event) {
+      touchstartX = event.changedTouches[0].screenX;
+    });
+
+    document.getElementById("imageModal").addEventListener('touchend', function (event) {
+      touchendX = event.changedTouches[0].screenX;
+      handleGesture();
+    });
+
+    // Enable keyboard arrow navigation
+    window.addEventListener("keydown", function (event) {
+      const modal = document.getElementById("imageModal");
+      if (modal.classList.contains("open")) {
+        if (event.key === "ArrowLeft") {
+          currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+          document.getElementById("modalImage").src = images[currentImageIndex];
+        } else if (event.key === "ArrowRight") {
+          currentImageIndex = (currentImageIndex + 1) % images.length;
+          document.getElementById("modalImage").src = images[currentImageIndex];
+        }
+      }
+    });
+
+    // Function to show custom download popup
+    function showDownloadPopup() {
+      document.getElementById("popupOverlay").style.display = "flex";
+    }
+
+    function confirmDownload() {
+      document.getElementById("popupOverlay").style.display = "none";
       const checkboxes = document.querySelectorAll('.download-checkbox');
       const selectedImages = [];
 
@@ -276,24 +414,79 @@
         }
       });
 
-      if (selectedImages.length > 0) {
-        selectedImages.forEach(image => {
-          const link = document.createElement('a');
-          link.href = image;
-          link.download = image.split('/').pop();
-          link.click();
-        });
-      } else {
-        alert('No images selected for download.');
+      selectedImages.forEach(image => {
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = image.split('/').pop();
+        link.click();
+      });
+    }
+
+    function cancelDownload() {
+      document.getElementById("popupOverlay").style.display = "none";
+    }
+
+    // Make floating download button movable
+    const floatingButton = document.getElementById("floating-download-button");
+    let isDraggingButton = false;
+    let offsetX, offsetY;
+
+    floatingButton.addEventListener("mousedown", (e) => {
+      isDraggingButton = true;
+      offsetX = e.clientX - floatingButton.offsetLeft;
+      offsetY = e.clientY - floatingButton.offsetTop;
+      floatingButton.style.transition = "none"; // Disable transition during drag
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (isDraggingButton) {
+        floatingButton.style.left = `${e.clientX - offsetX}px`;
+        floatingButton.style.top = `${e.clientY - offsetY}px`;
+      }
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (isDraggingButton) {
+        isDraggingButton = false;
+        floatingButton.style.transition = "background-color 0.3s ease, box-shadow 0.3s ease"; // Re-enable transition after drag
+      }
+    });
+
+    // Add event listener to the floating download button
+    floatingButton.addEventListener("click", () => {
+      if (!isDraggingButton) {
+        showDownloadPopup();
+      }
+    });
+
+    // Allow arrow key movement for the floating button
+    floatingButton.addEventListener("click", () => {
+      window.addEventListener("keydown", moveButtonWithArrows);
+    });
+
+    function moveButtonWithArrows(e) {
+      const step = 10;
+      const rect = floatingButton.getBoundingClientRect();
+      switch (e.key) {
+        case "ArrowUp":
+          floatingButton.style.top = `${rect.top - step}px`;
+          break;
+        case "ArrowDown":
+          floatingButton.style.top = `${rect.top + step}px`;
+          break;
+        case "ArrowLeft":
+          floatingButton.style.left = `${rect.left - step}px`;
+          break;
+        case "ArrowRight":
+          floatingButton.style.left = `${rect.left + step}px`;
+          break;
+        default:
+          break;
       }
     }
 
     // Load photos when the page loads
     document.addEventListener("DOMContentLoaded", displayPhotos);
-
-    // Add event listener to the download button
-    const downloadButton = document.getElementById("download-button");
-    downloadButton.addEventListener("click", downloadSelectedImages);
   </script>
 </body>
 
