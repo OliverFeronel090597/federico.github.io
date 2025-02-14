@@ -1,0 +1,325 @@
+body {
+    background-image: url('heaven_background.jpg'); /* Replace with your heaven-like background image */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    padding: 20px;
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  .header {
+    width: 100%;
+    height: auto;
+    margin-bottom: 20px;
+  }
+  
+  .gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  .photo-container {
+    width: 23%;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .photo-container:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  .photo {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .selected {
+    border: 5px solid #ff69b4; /* Pink border for selected images */
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+  }
+  
+  .download-checkbox {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    transform: scale(2.5);
+    display: none; /* Hide checkboxes */
+  }
+  
+  /* Floating Download Button */
+  #floating-download-button,
+  #floating-help-button {
+    position: fixed;
+    background-size: cover;
+    background-repeat: no-repeat;
+    width: 50px;
+    height: 50px;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    user-select: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  #floating-download-button {
+    bottom: 20px;
+    right: 80px;
+    background-image: url('icon/download.png'); /* Pink arrow background */
+  }
+  
+  #floating-help-button {
+    bottom: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    font-size: 24px;
+    line-height: 50px;
+  }
+  
+  #floating-download-button:hover {
+    background-color: #c10202;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  }
+  
+  #floating-help-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .modal.open {
+    display: flex;
+    opacity: 1;
+  }
+  
+  .modal-content {
+    max-width: 90%;
+    max-height: 90%;
+    display: block;
+    margin: auto;
+    transition: transform 0.3s ease;
+  }
+  
+  .close {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: white;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .close:hover {
+    color: #ccc;
+  }
+  
+  .modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 10px;
+    user-select: none;
+  }
+  
+  .modal-nav.prev {
+    left: 10px;
+  }
+  
+  .modal-nav.next {
+    right: 10px;
+  }
+  
+  .modal-nav:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+  
+  .download-modal {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #e20303;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .download-modal:hover {
+    background-color: #c10202;
+  }
+  
+  /* Custom Popup Styles */
+  .popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+  
+  .popup,
+  .help-popup {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    max-width: 90%;
+    margin: 0 20px;
+  }
+  
+  .popup button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .popup button.confirm {
+    background-color: #e20303;
+    color: white;
+  }
+  
+  .popup button.cancel {
+    background-color: #ddd;
+    color: black;
+  }
+  
+  .help-popup {
+    position: relative;
+  }
+  
+  .popup button:hover {
+    opacity: 0.8;
+  }
+  
+  .help-popup .close-help {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: black;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .help-popup .close-help:hover {
+    color: #ccc;
+  }
+  
+  /* Loading Screen Styles */
+  .loading-overlay {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 3000;
+  }
+  
+  .header-loading {
+    width: 50%;
+    height: auto;
+    opacity: 0.5;
+    margin-bottom: 20px;
+  }
+  
+  .loading-spinner {
+    border: 16px solid #f3f3f3;
+    border-top: 16px solid #3498db;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+  }
+  
+  .loading-percentage {
+    margin-top: 20px;
+    font-size: 24px;
+    color: #3498db;
+  }
+  
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Mobile Responsiveness */
+  @media (max-width: 768px) {
+    .photo-container {
+      width: 48%;
+    }
+  
+    .modal-content {
+      max-width: 100%;
+      max-height: 80%;
+    }
+  
+    .modal-nav {
+      font-size: 18px;
+      padding: 8px;
+    }
+  
+    .download-modal {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+  
+    .help-popup {
+      max-width: 80%;
+    }
+  
+    .header-loading {
+      width: 80%;
+    }
+  }
