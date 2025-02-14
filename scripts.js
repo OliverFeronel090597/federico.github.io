@@ -8,14 +8,13 @@ let clickTimeout;
 function displayPhotos() {
   const photosContainer = document.getElementById("photos");
   const totalImages = 203;
-  let loadedImages = 0;
 
   for (let i = 1; i <= totalImages; i++) {
     const photoContainer = document.createElement("div");
     photoContainer.classList.add("photo-container");
 
     const photo = document.createElement("img");
-    photo.src = `PHOTOS/${i}.jpg`; // Display original image
+    photo.src = `PHOTOS/LOW_RES/${i}.jpg`; // Display low-resolution image
     photo.alt = `Photo ${i}`;
     photo.classList.add("photo");
 
@@ -32,7 +31,7 @@ function displayPhotos() {
     photoContainer.addEventListener("dblclick", function (e) {
       e.preventDefault();
       currentImageIndex = i - 1; // Set current image index
-      openModal(photo.src);
+      openModal(`PHOTOS/${i}.jpg`); // Display original image in modal
     });
 
     // Add single click event listener to select/deselect the photo
@@ -45,19 +44,7 @@ function displayPhotos() {
     });
 
     // Store image sources for navigation
-    images.push(photo.src);
-
-    // Update loading percentage
-    photo.onload = () => {
-      loadedImages++;
-      const percentage = Math.round((loadedImages / totalImages) * 100);
-      document.querySelector('.loading-percentage').textContent = `${percentage}%`;
-
-      // Hide loading screen once all images are loaded
-      if (loadedImages === totalImages) {
-        document.querySelector('.loading-overlay').style.display = 'none';
-      }
-    };
+    images.push(`PHOTOS/${i}.jpg`); // Store original image source
   }
 }
 
@@ -87,7 +74,7 @@ function closeModal() {
 // Close modal when clicking outside the image
 window.addEventListener("click", function (event) {
   const modal = document.getElementById("imageModal");
-  if (event.target === modal) {
+  if (event.target === modal && event.target.classList.contains('modal')) {
     closeModal();
   }
 });
