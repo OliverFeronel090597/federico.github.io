@@ -64,11 +64,9 @@
     }
 
     /* Floating Download Button */
-    #floating-download-button {
+    #floating-download-button,
+    #floating-help-button {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-image: url('icon/download.png'); /* Pink arrow background */
       background-size: cover;
       background-repeat: no-repeat;
       width: 50px;
@@ -83,9 +81,28 @@
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
 
+    #floating-download-button {
+      bottom: 20px;
+      right: 80px;
+      background-image: url('icon/download.png'); /* Pink arrow background */
+    }
+
+    #floating-help-button {
+      bottom: 20px;
+      right: 20px;
+      background-color: #007bff;
+      color: white;
+      font-size: 24px;
+      line-height: 50px;
+    }
+
     #floating-download-button:hover {
       background-color: #c10202;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    #floating-help-button:hover {
+      background-color: #0056b3;
     }
 
     /* Modal Styles */
@@ -187,12 +204,15 @@
       z-index: 2000;
     }
 
-    .popup {
+    .popup,
+    .help-popup {
       background-color: white;
       padding: 20px;
       border-radius: 5px;
       text-align: center;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      max-width: 90%;
+      margin: 0 20px;
     }
 
     .popup button {
@@ -213,8 +233,65 @@
       color: black;
     }
 
+    .help-popup {
+      position: relative;
+    }
+
     .popup button:hover {
       opacity: 0.8;
+    }
+
+    .help-popup .close-help {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: black;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .help-popup .close-help:hover {
+      color: #ccc;
+    }
+
+    /* Loading Screen Styles */
+    .loading-overlay {
+      display: flex;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 3000;
+    }
+
+    .loading-spinner {
+      border: 16px solid #f3f3f3;
+      border-top: 16px solid #3498db;
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      animation: spin 2s linear infinite;
+    }
+
+    .loading-percentage {
+      margin-top: 20px;
+      font-size: 24px;
+      color: #3498db;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
     /* Mobile Responsiveness */
@@ -237,13 +314,23 @@
         padding: 8px 16px;
         font-size: 14px;
       }
+
+      .help-popup {
+        max-width: 80%;
+      }
     }
   </style>
 </head>
 
 <body>
+  <div class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-percentage">0%</div>
+  </div>
+
   <img src="icon/internment_1.jpg" class="header" alt="Header Image">
   <div id="floating-download-button"></div>
+  <div id="floating-help-button">?</div>
   <div class="gallery" id="photos"></div>
 
   <!-- Modal for expanded view -->
@@ -264,10 +351,20 @@
     </div>
   </div>
 
+  <!-- Help Popup for instructions -->
+  <div id="helpPopupOverlay" class="popup-overlay">
+    <div class="help-popup">
+      <span class="close-help" onclick="closeHelpPopup()">&times;</span>
+      <h3>How to Download Images</h3>
+      <p>1. Click on an image to select or deselect it.</p>
+      <p>2. Double-click on an image to view it.</p>
+      <p>3. Click the download button to download selected images.</p>
+    </div>
+  </div>
+
   <script>
-    let isDragging = false;
-    let originalPositionX = 0;
-    let expandedPhoto = null;
+    let isDraggingDownloadButton = false;
+    let isDraggingHelpButton = false;
     let currentImageIndex = 0;
     const images = [];
     let clickTimeout;
@@ -275,8 +372,10 @@
     // Function to display photos
     function displayPhotos() {
       const photosContainer = document.getElementById("photos");
+      const totalImages = 203;
+      let loadedImages = 0;
 
-      for (let i = 1; i <= 204; i++) {
+      for (let i = 1; i <= totalImages; i++) {
         const photoContainer = document.createElement("div");
         photoContainer.classList.add("photo-container");
 
@@ -311,6 +410,18 @@
 
         // Store image sources for navigation
         images.push(photo.src);
+
+        // Update loading percentage
+        photo.onload = () => {
+          loadedImages++;
+          const percentage = Math.round((loadedImages / totalImages) * 100);
+          document.querySelector('.loading-percentage').textContent = `${percentage}%`;
+
+          // Hide loading screen once all images are loaded
+          if (loadedImages === totalImages) {
+            document.querySelector('.loading-overlay').style.display = 'none';
+          }
+        };
       }
     }
 
@@ -426,64 +537,56 @@
       document.getElementById("popupOverlay").style.display = "none";
     }
 
-    // Make floating download button movable
-    const floatingButton = document.getElementById("floating-download-button");
-    let isDraggingButton = false;
-    let offsetX, offsetY;
-
-    floatingButton.addEventListener("mousedown", (e) => {
-      isDraggingButton = true;
-      offsetX = e.clientX - floatingButton.offsetLeft;
-      offsetY = e.clientY - floatingButton.offsetTop;
-      floatingButton.style.transition = "none"; // Disable transition during drag
-    });
-
-    window.addEventListener("mousemove", (e) => {
-      if (isDraggingButton) {
-        floatingButton.style.left = `${e.clientX - offsetX}px`;
-        floatingButton.style.top = `${e.clientY - offsetY}px`;
-      }
-    });
-
-    window.addEventListener("mouseup", () => {
-      if (isDraggingButton) {
-        isDraggingButton = false;
-        floatingButton.style.transition = "background-color 0.3s ease, box-shadow 0.3s ease"; // Re-enable transition after drag
-      }
-    });
-
-    // Add event listener to the floating download button
-    floatingButton.addEventListener("click", () => {
-      if (!isDraggingButton) {
-        showDownloadPopup();
-      }
-    });
-
-    // Allow arrow key movement for the floating button
-    floatingButton.addEventListener("click", () => {
-      window.addEventListener("keydown", moveButtonWithArrows);
-    });
-
-    function moveButtonWithArrows(e) {
-      const step = 10;
-      const rect = floatingButton.getBoundingClientRect();
-      switch (e.key) {
-        case "ArrowUp":
-          floatingButton.style.top = `${rect.top - step}px`;
-          break;
-        case "ArrowDown":
-          floatingButton.style.top = `${rect.top + step}px`;
-          break;
-        case "ArrowLeft":
-          floatingButton.style.left = `${rect.left - step}px`;
-          break;
-        case "ArrowRight":
-          floatingButton.style.left = `${rect.left + step}px`;
-          break;
-        default:
-          break;
-      }
+    // Function to show help popup
+    function showHelpPopup() {
+      document.getElementById("helpPopupOverlay").style.display = "flex";
     }
+
+    function closeHelpPopup() {
+      document.getElementById("helpPopupOverlay").style.display = "none";
+    }
+
+    // Make floating buttons movable
+    const floatingDownloadButton = document.getElementById('floating-download-button');
+    const floatingHelpButton = document.getElementById('floating-help-button');
+
+    function makeButtonMovable(button, isDraggingFlag) {
+      let offsetX, offsetY;
+
+      button.addEventListener("mousedown", (e) => {
+        window[isDraggingFlag] = true;
+        offsetX = e.clientX - button.offsetLeft;
+        offsetY = e.clientY - button.offsetTop;
+        button.style.transition = "none"; // Disable transition during drag
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (window[isDraggingFlag]) {
+          button.style.left = `${e.clientX - offsetX}px`;
+          button.style.top = `${e.clientY - offsetY}px`;
+        }
+      });
+
+      window.addEventListener("mouseup", () => {
+        if (window[isDraggingFlag]) {
+          window[isDraggingFlag] = false;
+          button.style.transition = "background-color 0.3s ease, box-shadow 0.3s ease"; // Re-enable transition after drag
+        }
+      });
+
+      button.addEventListener("click", () => {
+        if (!window[isDraggingFlag]) {
+          if (button === floatingDownloadButton) {
+            showDownloadPopup();
+          } else if (button === floatingHelpButton) {
+            showHelpPopup();
+          }
+        }
+      });
+    }
+
+    makeButtonMovable(floatingDownloadButton, 'isDraggingDownloadButton');
+    makeButtonMovable(floatingHelpButton, 'isDraggingHelpButton');
 
     // Load photos when the page loads
     document.addEventListener("DOMContentLoaded", displayPhotos);
