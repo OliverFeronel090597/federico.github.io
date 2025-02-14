@@ -3,7 +3,7 @@ from PIL import Image
 
 # Input and output folder paths
 input_folder = r"C:\Users\O.Feronel\OneDrive - ams OSRAM\Documents\TATAY_INTERNMENT\federico.github.io\PHOTOS"
-output_folder = r"C:\Users\O.Feronel\OneDrive - ams OSRAM\Documents\TATAY_INTERNMENT\federico.github.io\lowResPhotos"
+output_folder = r"C:\Users\O.Feronel\OneDrive - ams OSRAM\Documents\TATAY_INTERNMENT\federico.github.io\PHOTOS\LOW_RES"
 new_size = (800, 600)  # Change to desired resolution (width, height)
 
 # Ensure output folder exists

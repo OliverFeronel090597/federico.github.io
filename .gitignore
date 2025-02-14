@@ -30,8 +30,3 @@
 *.exe
 *.out
 *.app
-
-#Photos folder
-PHOTOS
-lowResPhotos
-python
